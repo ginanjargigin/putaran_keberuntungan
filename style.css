@@ -198,8 +198,8 @@ input:focus-visible {
   transform: translateX(-50%);
   border-left: 16px solid transparent;
   border-right: 16px solid transparent;
-  border-top: 0;
-  border-bottom: 30px solid var(--red);
+  border-top: 30px solid var(--red);
+  border-bottom: 0;
   filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.22));
 }
 
