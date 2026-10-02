@@ -128,8 +128,6 @@ function addNames(rawText) {
   state.names.push(...incoming);
   saveStorage();
   renderAll();
-  clearInput(elements.nameInput);
-  clearInput(elements.modalNameInput);
   showToast(`${incoming.length} nama ditambahkan.`);
   return true;
 }
