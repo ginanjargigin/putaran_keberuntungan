@@ -339,7 +339,15 @@ function drawWheel() {
     ctx.lineWidth = Math.max(1.5, size / 260);
     ctx.stroke();
 
-    drawWheelLabel(state.names[i], i, start, end, radius, size);
+    drawWheelLabel(
+     state.names[i],
+     i,
+     start,
+     end,
+     radius,
+     size,
+     currentRotation
+   );
   }
 
   ctx.restore();
@@ -378,36 +386,71 @@ function drawEmptyWheel() {
   ctx.fillText("untuk memulai", center, center + 17);
 }
 
-function drawWheelLabel(name, index, start, end, radius, size) {
+function drawWheelLabel(
+  name,
+  index,
+  start,
+  end,
+  radius,
+  size,
+  currentRotation
+) {
   const angle = start + (end - start) / 2;
-  const labelRadius = radius * 0.66;
+  const labelRadius = radius * 0.70;
+
   const x = Math.cos(angle) * labelRadius;
   const y = Math.sin(angle) * labelRadius;
-  const maxChars = size < 330 ? 13 : 18;
 
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.rotate(angle + Math.PI / 2);
+  const count = state.names.length;
 
   const fontSize = clamp(
-    size / (state.names.length > 12 ? 26 : 21),
-    11,
+    size / (
+      count > 30
+        ? 46
+        : count > 12
+          ? 32
+          : 21
+    ),
+    9,
     22
   );
+
+  const availableWidth = Math.max(
+    24,
+    2 * labelRadius * Math.sin((end - start) / 2) * 0.82
+  );
+
+  ctx.save();
+
+  ctx.translate(x, y);
+
+  /*
+   * Wheel berputar, tetapi teks dikembalikan
+   * ke posisi horizontal terhadap layar.
+   */
+  ctx.rotate(-degToRad(currentRotation));
 
   ctx.font = `900 ${fontSize}px Nunito, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#ffffff";
+
   ctx.shadowColor = "rgba(0,0,0,0.18)";
   ctx.shadowBlur = 2;
 
-  const label = truncateName(name, maxChars);
+  let label = name;
+
+  while (
+    ctx.measureText(label).width > availableWidth &&
+    label.length > 2
+  ) {
+    label = `${label.slice(0, -2)}…`;
+  }
+
   ctx.fillText(label, 0, 0);
 
   ctx.restore();
 }
-
 function truncateName(name, maxChars) {
   if (name.length <= maxChars) return name;
   return `${name.slice(0, Math.max(1, maxChars - 1))}…`;
