@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#c62828">
+  <meta name="description" content="Putaran Keberuntungan — roda pemilih nama sederhana, ceria, dan tanpa iklan.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <title>Putaran Keberuntungan</title>
+</head>
+
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Putaran Keberuntungan">
+        <span class="brand-mark" aria-hidden="true">✦</span>
+        <span>
+          <strong>Putaran Keberuntungan</strong>
+          <small>PUTAR • TANTANG • PILIH • JUJUR</small>
+        </span>
+      </a>
+
+      <button class="icon-button menu-toggle" id="menuToggle" type="button"
+        aria-label="Buka menu" aria-expanded="false" aria-controls="mobileMenu">☰</button>
+
+      <nav class="desktop-nav" aria-label="Navigasi utama">
+        <button type="button" data-action="openNames">Daftar Nama</button>
+        <button type="button" data-action="openHistory">Riwayat</button>
+        <button type="button" data-action="openSettings">Pengaturan</button>
+      </nav>
+    </header>
+
+    <main class="main-content">
+      <section class="wheel-section" aria-label="Pemutar keberuntungan">
+        <div class="wheel-stage">
+          <div class="pointer" aria-hidden="true"></div>
+          <canvas id="wheelCanvas" aria-label="Roda nama"></canvas>
+          <div class="wheel-center" aria-hidden="true">
+            <span>PK</span>
+          </div>
+        </div>
+
+        <button class="spin-button" id="spinButton" type="button">
+          <span class="spin-icon" aria-hidden="true">↻</span>
+          <span>SPIN</span>
+        </button>
+
+        <p class="wheel-status" id="wheelStatus" role="status" aria-live="polite">
+          Tambahkan nama, lalu putar rodanya.
+        </p>
+      </section>
+
+      <aside class="names-panel panel">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">PESERTA</span>
+            <h2>Daftar Nama <span class="count-badge" id="nameCount">0</span></h2>
+          </div>
+          <button class="text-button" type="button" data-action="clearNames">Hapus semua</button>
+        </div>
+
+        <textarea id="nameInput" rows="5"
+          placeholder="Masukkan satu nama per baris&#10;Contoh:&#10;Andi&#10;Budi&#10;Citra"
+          aria-label="Daftar nama, satu nama per baris"></textarea>
+
+        <button class="primary-button" id="addNamesButton" type="button">
+          + Tambahkan Nama
+        </button>
+
+        <div class="name-list" id="nameList" aria-label="Nama peserta"></div>
+      </aside>
+
+      <section class="result-panel panel" aria-live="polite">
+        <div class="panel-heading">
+          <div>
+            <span class="eyebrow">HASIL PUTARAN</span>
+            <h2>Nama Terpilih</h2>
+          </div>
+          <span class="result-icon" aria-hidden="true">🏆</span>
+        </div>
+
+        <div class="result-content" id="resultContent">
+          <span class="result-placeholder">Pemenang akan muncul di sini.</span>
+        </div>
+
+        <div class="result-actions" id="resultActions" hidden>
+          <button class="primary-button" type="button" id="spinAgainButton">Putar Lagi</button>
+          <button class="secondary-button" type="button" id="removeWinnerButton">Hapus Pemenang</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Setiap nama mendapat satu kesempatan yang sama.</span>
+      <span>Tanpa iklan • Data tersimpan di perangkat</span>
+    </footer>
+  </div>
+
+  <div class="drawer-backdrop" id="drawerBackdrop" hidden></div>
+
+  <aside class="mobile-drawer" id="mobileMenu" aria-label="Menu" aria-hidden="true">
+    <div class="drawer-header">
+      <strong>Menu</strong>
+      <button class="icon-button" type="button" data-action="closeMenu" aria-label="Tutup menu">×</button>
+    </div>
+    <button class="drawer-item" type="button" data-action="openNames">👥 Daftar Nama</button>
+    <button class="drawer-item" type="button" data-action="openHistory">📜 Riwayat</button>
+    <button class="drawer-item" type="button" data-action="openSettings">⚙️ Pengaturan</button>
+  </aside>
+
+  <dialog class="modal" id="namesModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">PESERTA</span>
+          <h2>Daftar Nama</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-dialog="namesModal" aria-label="Tutup">×</button>
+      </div>
+      <div class="modal-body">
+        <textarea id="modalNameInput" rows="6"
+          placeholder="Satu nama per baris"
+          aria-label="Tambahkan nama"></textarea>
+        <button class="primary-button" type="button" id="modalAddNamesButton">Tambahkan</button>
+        <div class="name-list modal-name-list" id="modalNameList"></div>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="historyModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">HASIL SEBELUMNYA</span>
+          <h2>Riwayat Putaran</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-dialog="historyModal" aria-label="Tutup">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="historyList" class="history-list"></div>
+        <button class="secondary-button full-width" type="button" id="clearHistoryButton">Hapus Riwayat</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog class="modal" id="settingsModal">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <span class="eyebrow">PENGATURAN</span>
+          <h2>Putaran</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-dialog="settingsModal" aria-label="Tutup">×</button>
+      </div>
+      <div class="modal-body">
+        <label class="setting-row">
+          <span>
+            <strong>Hapus pemenang otomatis</strong>
+            <small>Nama yang menang langsung dikeluarkan dari putaran berikutnya.</small>
+          </span>
+          <input id="autoRemoveWinner" type="checkbox">
+        </label>
+
+        <label class="setting-row">
+          <span>
+            <strong>Suara</strong>
+            <small>Efek suara singkat saat putaran selesai.</small>
+          </span>
+          <input id="soundEnabled" type="checkbox">
+        </label>
+
+        <button class="danger-button full-width" type="button" id="resetAppButton">
+          Reset Semua Data
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="script.js" defer></script>
+</body>
+</html>
