@@ -584,7 +584,6 @@ function easeOutCubic(t) {
 
 function playIntroSpin() {
   if (
-    !state.demoNames ||
     state.names.length < 2 ||
     state.spinning
   ) {
@@ -592,7 +591,9 @@ function playIntroSpin() {
   }
 
   state.spinning = true;
-  updateControls();
+  elements.spinButton.disabled = true;
+  elements.spinAgainButton.disabled = true;
+  elements.removeWinnerButton.disabled = true;
 
   const startRotation = state.rotation;
   const targetRotation = startRotation + 540;
@@ -650,22 +651,23 @@ function completeSpin(winnerIndex) {
 
   state.history = state.history.slice(0, 50);
 
-  renderWinner(winner);
-  saveStorage();
-  playWinSound();
-  renderHistory();
-  updateControls();
-
   if (state.settings.autoRemoveWinner) {
     state.names.splice(winnerIndex, 1);
     state.winnerIndex = null;
-    saveStorage();
-    renderAll();
-    elements.wheelStatus.textContent = `${winner} terpilih dan dihapus dari daftar.`;
-  } else {
-    elements.wheelStatus.textContent = `${winner} terpilih.`;
-    drawWheel();
   }
+
+  saveStorage();
+  renderAll();
+
+  // Render hasil SETELAH renderAll agar tidak tertimpa placeholder.
+  renderWinner(winner);
+
+  elements.wheelStatus.textContent = state.settings.autoRemoveWinner
+    ? `${winner} terpilih dan dihapus dari daftar.`
+    : `${winner} terpilih.`;
+
+  playWinSound();
+  celebrateWinner(winner);
 }
 
 function renderWinner(winner) {
@@ -675,291 +677,116 @@ function renderWinner(winner) {
 
   const label = document.createElement("span");
   label.className = "result-label";
-  label.textContent = "NAMA TERPILIH";
+  label.textContent = "🎉 SELAMAT! 🎉";
 
   const name = document.createElement("strong");
   name.className = "result-winner";
   name.textContent = winner;
 
-  wrapper.append(label, name);
+  const message = document.createElement("span");
+  message.className = "result-label";
+  message.textContent = "Nama ini terpilih sebagai pemenang!";
+
+  wrapper.append(label, name, message);
   elements.resultContent.appendChild(wrapper);
   elements.resultActions.hidden = false;
 }
 
-function removeWinner() {
-  if (
-    state.spinning ||
-    state.winnerIndex === null ||
-    !state.names[state.winnerIndex]
-  ) {
-    return;
-  }
+function celebrateWinner(winner) {
+  const overlay = document.createElement("div");
+  overlay.setAttribute("role", "status");
+  overlay.setAttribute("aria-live", "assertive");
 
-  const winner = state.names[state.winnerIndex];
-  state.names.splice(state.winnerIndex, 1);
-  state.winnerIndex = null;
+  Object.assign(overlay.style, {
+    position: "fixed",
+    inset: "0",
+    zIndex: "9999",
+    display: "grid",
+    placeItems: "center",
+    pointerEvents: "none",
+    overflow: "hidden"
+  });
 
-  saveStorage();
-  renderAll();
-  elements.resultActions.hidden = true;
-  elements.resultContent.innerHTML =
-    '<span class="result-placeholder">Pemenang telah dihapus.</span>';
-  showToast(`${winner} dihapus dari daftar.`);
-}
+  const message = document.createElement("div");
+  message.textContent = `🎂 SELAMAT! ${winner}! 🎉`;
 
-function clearHistory() {
-  if (!state.history.length) return;
+  Object.assign(message.style, {
+    position: "relative",
+    zIndex: "2",
+    maxWidth: "90vw",
+    padding: "18px 24px",
+    borderRadius: "18px",
+    background: "rgba(255,255,255,0.96)",
+    boxShadow: "0 16px 50px rgba(0,0,0,0.22)",
+    font: "900 clamp(22px, 6vw, 42px)/1.15 Nunito, sans-serif",
+    textAlign: "center",
+    color: "#1f2937",
+    transform: "scale(.65)",
+    opacity: "0"
+  });
 
-  const confirmed = window.confirm("Hapus seluruh riwayat putaran?");
-  if (!confirmed) return;
+  overlay.appendChild(message);
+  document.body.appendChild(overlay);
 
-  state.history = [];
-  saveStorage();
-  renderHistory();
-  showToast("Riwayat dihapus.");
-}
-
-function resetApp() {
-  const confirmed = window.confirm(
-    "Reset semua nama, riwayat, dan pengaturan?"
+  message.animate(
+    [
+      { transform: "scale(.65)", opacity: 0 },
+      { transform: "scale(1.08)", opacity: 1, offset: .45 },
+      { transform: "scale(1)", opacity: 1 }
+    ],
+    {
+      duration: 650,
+      easing: "cubic-bezier(.2,.9,.25,1)",
+      fill: "forwards"
+    }
   );
 
-  if (!confirmed) return;
-
-  state.names = [];
-  state.history = [];
-  state.settings = { ...DEFAULT_SETTINGS };
-  state.rotation = 0;
-  state.winnerIndex = null;
-  state.demoNames = false;
-
-  saveStorage();
-
-  elements.autoRemoveWinner.checked = false;
-  elements.soundEnabled.checked = false;
-  elements.resultActions.hidden = true;
-  elements.resultContent.innerHTML =
-    '<span class="result-placeholder">Pemenang akan muncul di sini.</span>';
-
-  renderAll();
-  showToast("Aplikasi berhasil direset.");
-}
-
-function updateSetting(key, value) {
-  state.settings[key] = Boolean(value);
-  saveStorage();
-}
-
-function playWinSound() {
-  if (!state.settings.soundEnabled) return;
-
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-
-    if (!state.audioContext) {
-      state.audioContext = new AudioContextClass();
+  if ("vibrate" in navigator) {
+    try {
+      navigator.vibrate([80, 40, 120]);
+    } catch (_) {
+      // Vibrasi tidak tersedia/diizinkan; abaikan.
     }
-
-    const audio = state.audioContext;
-    const oscillator = audio.createOscillator();
-    const gain = audio.createGain();
-
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(660, audio.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(
-      990,
-      audio.currentTime + 0.16
-    );
-
-    gain.gain.setValueAtTime(0.0001, audio.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.08, audio.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.22);
-
-    oscillator.connect(gain);
-    gain.connect(audio.destination);
-
-    oscillator.start();
-    oscillator.stop(audio.currentTime + 0.23);
-  } catch (error) {
-    console.warn("Audio tidak tersedia:", error);
-  }
-}
-
-function showToast(message) {
-  window.clearTimeout(toastTimer);
-
-  elements.toast.textContent = message;
-  elements.toast.classList.add("is-visible");
-
-  toastTimer = window.setTimeout(() => {
-    elements.toast.classList.remove("is-visible");
-  }, 2200);
-}
-
-function openDialog(dialog) {
-  if (!dialog || state.spinning) return;
-
-  if (typeof dialog.showModal === "function") {
-    dialog.showModal();
-  } else {
-    dialog.setAttribute("open", "");
-  }
-}
-
-function closeDialog(dialog) {
-  if (!dialog) return;
-
-  if (typeof dialog.close === "function" && dialog.open) {
-    dialog.close();
-  } else {
-    dialog.removeAttribute("open");
-  }
-}
-
-function openNames() {
-  closeMenu();
-  renderNameList(elements.modalNameList);
-  openDialog(elements.namesModal);
-}
-
-function openHistory() {
-  closeMenu();
-  renderHistory();
-  openDialog(elements.historyModal);
-}
-
-function openSettings() {
-  closeMenu();
-  elements.autoRemoveWinner.checked = state.settings.autoRemoveWinner;
-  elements.soundEnabled.checked = state.settings.soundEnabled;
-  openDialog(elements.settingsModal);
-}
-
-function openMenu() {
-  elements.mobileMenu.classList.add("is-open");
-  elements.mobileMenu.setAttribute("aria-hidden", "false");
-  elements.menuToggle.setAttribute("aria-expanded", "true");
-  elements.drawerBackdrop.hidden = false;
-  document.body.style.overflow = "hidden";
-}
-
-function closeMenu() {
-  elements.mobileMenu.classList.remove("is-open");
-  elements.mobileMenu.setAttribute("aria-hidden", "true");
-  elements.menuToggle.setAttribute("aria-expanded", "false");
-  elements.drawerBackdrop.hidden = true;
-  document.body.style.overflow = "";
-}
-
-function handleAction(action) {
-  switch (action) {
-    case "openNames":
-      openNames();
-      break;
-    case "openHistory":
-      openHistory();
-      break;
-    case "openSettings":
-      openSettings();
-      break;
-    case "clearNames":
-      clearNames();
-      break;
-    case "closeMenu":
-      closeMenu();
-      break;
-    default:
-      break;
-  }
-}
-
-elements.addNamesButton.addEventListener("click", () => {
-  addNames(elements.nameInput.value);
-});
-
-elements.modalAddNamesButton.addEventListener("click", () => {
-  if (addNames(elements.modalNameInput.value)) {
-    renderNameList(elements.modalNameList);
-  }
-});
-
-elements.spinButton.addEventListener("click", spin);
-elements.spinAgainButton.addEventListener("click", spin);
-elements.removeWinnerButton.addEventListener("click", removeWinner);
-elements.clearHistoryButton.addEventListener("click", clearHistory);
-elements.resetAppButton.addEventListener("click", resetApp);
-
-elements.autoRemoveWinner.addEventListener("change", (event) => {
-  updateSetting("autoRemoveWinner", event.target.checked);
-});
-
-elements.soundEnabled.addEventListener("change", (event) => {
-  updateSetting("soundEnabled", event.target.checked);
-});
-
-document.addEventListener("click", (event) => {
-  const actionElement = event.target.closest("[data-action]");
-
-  if (actionElement) {
-    handleAction(actionElement.dataset.action);
   }
 
-  const closeElement = event.target.closest("[data-close-dialog]");
+  const fragment = document.createDocumentFragment();
+  const pieces = 72;
 
-  if (closeElement) {
-    const dialog = document.getElementById(closeElement.dataset.closeDialog);
-    closeDialog(dialog);
-  }
-});
+  for (let i = 0; i < pieces; i += 1) {
+    const piece = document.createElement("span");
+    const angle = Math.random() * Math.PI * 2;
+    const distance = 180 + Math.random() * Math.min(window.innerWidth, window.innerHeight) * .65;
+    const x = Math.cos(angle) * distance;
+    const y = Math.sin(angle) * distance + 180;
+    const rotate = (Math.random() - .5) * 1400;
+    const size = 6 + Math.random() * 8;
 
-elements.menuToggle.addEventListener("click", () => {
-  if (elements.mobileMenu.classList.contains("is-open")) {
-    closeMenu();
-  } else {
-    openMenu();
-  }
-});
+    Object.assign(piece.style, {
+      position: "absolute",
+      left: "50%",
+      top: "43%",
+      width: `${size}px`,
+      height: `${size * 1.7}px`,
+      borderRadius: "2px",
+      background: `hsl(${Math.floor(Math.random() * 360)} 85% 55%)`,
+      transform: "translate3d(0,0,0)",
+      opacity: "1"
+    });
 
-elements.drawerBackdrop.addEventListener("click", closeMenu);
+    fragment.appendChild(piece);
 
-document.querySelectorAll(".modal").forEach((dialog) => {
-  dialog.addEventListener("click", (event) => {
-    if (event.target === dialog) {
-      closeDialog(dialog);
-    }
-  });
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
-    closeMenu();
-  }
-
-  if (
-    event.key === "Enter" &&
-    event.ctrlKey &&
-    document.activeElement === elements.nameInput
-  ) {
-    addNames(elements.nameInput.value);
-  }
-});
-
-const resizeObserver = new ResizeObserver(() => {
-  resizeCanvas();
-});
-
-resizeObserver.observe(elements.wheelStage);
-
-window.addEventListener("orientationchange", () => {
-  window.setTimeout(resizeCanvas, 120);
-});
-
-window.addEventListener("resize", resizeCanvas);
-
-loadStorage();
-renderAll();
-requestAnimationFrame(() => {
-  resizeCanvas();
-  playIntroSpin();
-});
+    piece.animate(
+      [
+        {
+          transform: "translate3d(0,0,0) rotate(0deg)",
+          opacity: 1
+        },
+        {
+          transform: `translate3d(${x}px, ${y}px, 0) rotate(${rotate}deg)`,
+          opacity: 0
+        }
+      ],
+      {
+        duration: 1500 + Math.random() * 900,
+        delay: Math.random() * 180,
+        easing: "cubic-bezier(
