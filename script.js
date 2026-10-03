@@ -1146,6 +1146,23 @@ function renderWinner(winner) {
   elements.resultActions.hidden =
     false;
 }
+function nextSpin() {
+  if (state.spinning) {
+    return;
+  }
+
+  state.winnerIndex = null;
+
+  elements.resultContent.innerHTML =
+    '<span class="result-placeholder">Pemenang akan muncul di sini.</span>';
+
+  elements.resultActions.hidden = true;
+
+  elements.wheelStatus.textContent =
+    "Siap untuk putaran berikutnya.";
+
+  updateControls();
+}
 
 /* =========================================================
    WINNER CELEBRATION
