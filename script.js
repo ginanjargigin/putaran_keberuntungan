@@ -8,13 +8,21 @@
 const STORAGE_KEYS = {
   names: "pk_names_v1",
   history: "pk_history_v1",
-  settings: "pk_settings_v1"
+  settings: "pk_settings_v1",
+  demoInitialized: "pk_demo_initialized_v1"
 };
 
 const DEFAULT_SETTINGS = {
   autoRemoveWinner: false,
   soundEnabled: false
 };
+const INTRO_SAMPLE_NAMES = [
+  "Andi",
+  "Ujang",
+  "Saskia",
+  "Dedi",
+  "Fitri"
+];
 
 const COLORS = [
   "#E53935",
@@ -36,6 +44,7 @@ const state = {
   rotation: 0,
   spinning: false,
   winnerIndex: null,
+  demoNames: false,
   audioContext: null
 };
 
@@ -75,25 +84,45 @@ let toastTimer = null;
 
 function loadStorage() {
   try {
-    const names = JSON.parse(localStorage.getItem(STORAGE_KEYS.names) || "[]");
-    const history = JSON.parse(localStorage.getItem(STORAGE_KEYS.history) || "[]");
-    const settings = JSON.parse(localStorage.getItem(STORAGE_KEYS.settings) || "{}");
+    const namesRaw = localStorage.getItem(STORAGE_KEYS.names);
+    const history = JSON.parse(
+      localStorage.getItem(STORAGE_KEYS.history) || "[]"
+    );
+    const settings = JSON.parse(
+      localStorage.getItem(STORAGE_KEYS.settings) || "{}"
+    );
+    const demoInitialized =
+      localStorage.getItem(STORAGE_KEYS.demoInitialized) === "true";
 
-    state.names = Array.isArray(names) ? sanitizeNames(names) : [];
+    const names = namesRaw ? JSON.parse(namesRaw) : [];
+
+    if (!demoInitialized && !names.length && !history.length) {
+      state.names = [...INTRO_SAMPLE_NAMES];
+      state.demoNames = true;
+    } else {
+      state.names = Array.isArray(names) ? sanitizeNames(names) : [];
+      state.demoNames = false;
+    }
+
     state.history = Array.isArray(history) ? history : [];
+
     state.settings = {
       ...DEFAULT_SETTINGS,
       ...(settings && typeof settings === "object" ? settings : {})
     };
   } catch (error) {
     console.warn("Data lokal tidak dapat dibaca:", error);
-    state.names = [];
+    state.names = [...INTRO_SAMPLE_NAMES];
     state.history = [];
     state.settings = { ...DEFAULT_SETTINGS };
+    state.demoNames = true;
   }
 
-  elements.autoRemoveWinner.checked = Boolean(state.settings.autoRemoveWinner);
-  elements.soundEnabled.checked = Boolean(state.settings.soundEnabled);
+  elements.autoRemoveWinner.checked =
+    Boolean(state.settings.autoRemoveWinner);
+
+  elements.soundEnabled.checked =
+    Boolean(state.settings.soundEnabled);
 }
 
 function saveStorage() {
@@ -101,9 +130,11 @@ function saveStorage() {
     localStorage.setItem(STORAGE_KEYS.names, JSON.stringify(state.names));
     localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.history));
     localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings));
+    localStorage.setItem(STORAGE_KEYS.demoInitialized,"true" ));
   } catch (error) {
     console.warn("Data lokal tidak dapat disimpan:", error);
     showToast("Penyimpanan browser tidak tersedia.");
+
   }
 }
 
@@ -124,7 +155,10 @@ function addNames(rawText) {
     showToast("Masukkan minimal satu nama.");
     return false;
   }
-
+  if (state.demoNames) {
+  state.names = [];
+  state.demoNames = false;
+}
   state.names.push(...incoming);
   saveStorage();
   renderAll();
@@ -513,6 +547,63 @@ function spin() {
   function frame(now) {
     const progress = clamp((now - startTime) / duration, 0, 1);
     const eased = easeOutCubic(progress);
+     function playIntroSpin() {
+  if (
+    !state.demoNames ||
+    state.names.length < 2 ||
+    state.spinning
+  ) {
+    return;
+  }
+
+  state.spinning = true;
+  updateControls();
+
+  const startRotation = state.rotation;
+  const targetRotation = startRotation + 540;
+  const duration = 3200;
+  const startTime = performance.now();
+
+  elements.wheelStatus.textContent =
+    "Selamat datang di Putaran Keberuntungan…";
+
+  function frame(now) {
+    const progress = clamp(
+      (now - startTime) / duration,
+      0,
+      1
+    );
+
+    const eased = easeInOutCubic(progress);
+
+    state.rotation =
+      startRotation +
+      (targetRotation - startRotation) * eased;
+
+    drawWheel();
+
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+      return;
+    }
+
+    state.rotation = targetRotation;
+    state.spinning = false;
+
+    elements.wheelStatus.textContent =
+      "Pilih nama, lalu putar rodanya.";
+
+    updateControls();
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function easeInOutCubic(t) {
+  return t < 0.5
+    ? 4 * t * t * t
+    : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
 
     state.rotation = startRotation + (targetRotation - startRotation) * eased;
     drawWheel();
@@ -854,4 +945,7 @@ window.addEventListener("resize", resizeCanvas);
 
 loadStorage();
 renderAll();
-requestAnimationFrame(resizeCanvas);
+requestAnimationFrame(() => {
+  resizeCanvas();
+  playIntroSpin();
+});
