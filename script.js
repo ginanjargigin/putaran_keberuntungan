@@ -87,6 +87,216 @@ function loadStorage() {
   try {
     const namesRaw = localStorage.getItem(STORAGE_KEYS.names);
 
+/* =========================================================
+   CONFETTI
+========================================================= */
+
+const confettiCanvas = document.getElementById("confettiCanvas");
+const confettiCtx = confettiCanvas.getContext("2d");
+
+let confettiParticles = [];
+let confettiAnimation = null;
+let confettiEndTime = 0;
+
+const CONFETTI_COLORS = [
+  "#FFD700",
+  "#FF3B30",
+  "#34C759",
+  "#007AFF",
+  "#AF52DE",
+  "#FF9500",
+  "#FFFFFF"
+];
+
+function resizeConfettiCanvas() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+  confettiCanvas.width = Math.floor(
+    window.innerWidth * dpr
+  );
+
+  confettiCanvas.height = Math.floor(
+    window.innerHeight * dpr
+  );
+
+  confettiCtx.setTransform(
+    dpr,
+    0,
+    0,
+    dpr,
+    0,
+    0
+  );
+}
+
+function createConfetti() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  confettiParticles = [];
+
+  const particleCount =
+    width < 600 ? 90 : 140;
+
+  for (let i = 0; i < particleCount; i++) {
+    confettiParticles.push({
+      x: Math.random() * width,
+      y: -Math.random() * height * 0.5,
+
+      width: 5 + Math.random() * 7,
+      height: 7 + Math.random() * 10,
+
+      speedY: 2 + Math.random() * 4,
+      speedX: -1.5 + Math.random() * 3,
+
+      rotation: Math.random() * Math.PI * 2,
+      rotationSpeed:
+        -0.08 + Math.random() * 0.16,
+
+      color:
+        CONFETTI_COLORS[
+          Math.floor(
+            Math.random() * CONFETTI_COLORS.length
+          )
+        ],
+
+      wobble: Math.random() * Math.PI * 2,
+      wobbleSpeed:
+        0.03 + Math.random() * 0.04,
+
+      opacity:
+        0.75 + Math.random() * 0.25
+    });
+  }
+}
+
+function drawConfetti(time) {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  confettiCtx.clearRect(
+    0,
+    0,
+    width,
+    height
+  );
+
+  const remaining =
+    confettiEndTime - time;
+
+  confettiParticles.forEach((particle) => {
+    particle.y += particle.speedY;
+
+    particle.wobble +=
+      particle.wobbleSpeed;
+
+    particle.x +=
+      particle.speedX +
+      Math.sin(particle.wobble) * 0.7;
+
+    particle.rotation +=
+      particle.rotationSpeed;
+
+    confettiCtx.save();
+
+    confettiCtx.translate(
+      particle.x,
+      particle.y
+    );
+
+    confettiCtx.rotate(
+      particle.rotation
+    );
+
+    confettiCtx.globalAlpha =
+      particle.opacity;
+
+    confettiCtx.fillStyle =
+      particle.color;
+
+    confettiCtx.fillRect(
+      -particle.width / 2,
+      -particle.height / 2,
+      particle.width,
+      particle.height
+    );
+
+    /*
+     * Efek kilau kecil
+     */
+    if (Math.random() > 0.88) {
+      confettiCtx.globalAlpha = 0.9;
+
+      confettiCtx.fillStyle = "#FFFFFF";
+
+      confettiCtx.fillRect(
+        -1,
+        -particle.height / 2,
+        2,
+        2
+      );
+    }
+
+    confettiCtx.restore();
+
+    if (particle.y > height + 30) {
+      particle.y =
+        -20 - Math.random() * 100;
+
+      particle.x =
+        Math.random() * width;
+    }
+  });
+
+  /*
+   * Fade out di akhir animasi
+   */
+  if (remaining < 500) {
+    confettiCtx.globalAlpha =
+      Math.max(0, remaining / 500);
+  }
+
+  if (time < confettiEndTime) {
+    confettiAnimation =
+      requestAnimationFrame(drawConfetti);
+  } else {
+    confettiCtx.clearRect(
+      0,
+      0,
+      width,
+      height
+    );
+
+    confettiParticles = [];
+    confettiAnimation = null;
+  }
+}
+
+function startConfetti() {
+  if (confettiAnimation) {
+    cancelAnimationFrame(
+      confettiAnimation
+    );
+  }
+
+  resizeConfettiCanvas();
+
+  createConfetti();
+
+  confettiEndTime =
+    performance.now() + 3000;
+
+  confettiAnimation =
+    requestAnimationFrame(drawConfetti);
+}
+
+window.addEventListener(
+  "resize",
+  resizeConfettiCanvas
+);
+
+resizeConfettiCanvas();
+
     const history = JSON.parse(
       localStorage.getItem(STORAGE_KEYS.history) || "[]"
     );
