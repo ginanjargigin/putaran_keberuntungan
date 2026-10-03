@@ -130,7 +130,10 @@ function saveStorage() {
     localStorage.setItem(STORAGE_KEYS.names, JSON.stringify(state.names));
     localStorage.setItem(STORAGE_KEYS.history, JSON.stringify(state.history));
     localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(state.settings));
-    localStorage.setItem(STORAGE_KEYS.demoInitialized,"true" ));
+    localStorage.setItem(
+      STORAGE_KEYS.demoInitialized,
+      "true"
+    );
   } catch (error) {
     console.warn("Data lokal tidak dapat disimpan:", error);
     showToast("Penyimpanan browser tidak tersedia.");
@@ -187,6 +190,7 @@ function clearNames() {
 
   state.names = [];
   state.winnerIndex = null;
+  state.demoNames = false;
   saveStorage();
   renderAll();
   showToast("Semua nama dihapus.");
@@ -299,9 +303,6 @@ function updateControls() {
   }
 }
 
-function clearInput(input) {
-  input.value = "";
-}
 
 function randomIndex(maxExclusive) {
   if (maxExclusive <= 1) return 0;
@@ -540,14 +541,48 @@ function spin() {
 
   const winnerIndex = randomIndex(state.names.length);
   const startRotation = state.rotation;
-  const targetRotation = getTargetRotation(winnerIndex, state.names.length);
+  const targetRotation = getTargetRotation(
+    winnerIndex,
+    state.names.length
+  );
   const duration = 4200 + randomIndex(1000);
   const startTime = performance.now();
 
   function frame(now) {
-    const progress = clamp((now - startTime) / duration, 0, 1);
+    const progress = clamp(
+      (now - startTime) / duration,
+      0,
+      1
+    );
+
     const eased = easeOutCubic(progress);
-     function playIntroSpin() {
+
+    state.rotation =
+      startRotation +
+      (targetRotation - startRotation) * eased;
+
+    drawWheel();
+
+    if (progress < 1) {
+      requestAnimationFrame(frame);
+      return;
+    }
+
+    state.rotation = targetRotation;
+    state.spinning = false;
+    state.winnerIndex = winnerIndex;
+
+    completeSpin(winnerIndex);
+  }
+
+  requestAnimationFrame(frame);
+}
+
+function easeOutCubic(t) {
+  return 1 - Math.pow(1 - t, 3);
+}
+
+function playIntroSpin() {
   if (
     !state.demoNames ||
     state.names.length < 2 ||
@@ -603,28 +638,6 @@ function easeInOutCubic(t) {
   return t < 0.5
     ? 4 * t * t * t
     : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
-    state.rotation = startRotation + (targetRotation - startRotation) * eased;
-    drawWheel();
-
-    if (progress < 1) {
-      requestAnimationFrame(frame);
-      return;
-    }
-
-    state.rotation = targetRotation;
-    state.spinning = false;
-    state.winnerIndex = winnerIndex;
-
-    completeSpin(winnerIndex);
-  }
-
-  requestAnimationFrame(frame);
-}
-
-function easeOutCubic(t) {
-  return 1 - Math.pow(1 - t, 3);
 }
 
 function completeSpin(winnerIndex) {
@@ -718,6 +731,7 @@ function resetApp() {
   state.settings = { ...DEFAULT_SETTINGS };
   state.rotation = 0;
   state.winnerIndex = null;
+  state.demoNames = false;
 
   saveStorage();
 
