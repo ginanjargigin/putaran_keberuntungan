@@ -1326,9 +1326,7 @@ function completeSpin(
       50
     );
 
-  const shouldRemove =
-    state.settings
-      .autoRemoveWinner;
+ const shouldRemove = false;
 
   if (shouldRemove) {
     state.names.splice(
@@ -1348,10 +1346,8 @@ function completeSpin(
     winner
   );
 
-  elements.wheelStatus.textContent =
-    shouldRemove
-      ? `${winner} terpilih dan dihapus dari daftar.`
-      : `${winner} terpilih.`;
+ elements.wheelStatus.textContent =
+  `${winner} terpilih.`;
 
   celebrateWinner(
     winner
