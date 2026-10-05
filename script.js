@@ -251,6 +251,15 @@ function parseNames(rawText) {
   );
 }
 
+function syncNameInput() {
+  if (!elements.nameInput) {
+    return;
+  }
+
+  elements.nameInput.value =
+    state.names.join("\n");
+}
+
 function addNames(rawText) {
   const incoming = parseNames(rawText);
 
@@ -299,6 +308,7 @@ function addNames(rawText) {
 
   saveStorage();
   renderAll();
+  syncNameInput();
 
   if (duplicateCount > 0) {
     if (uniqueNames.length > 0) {
@@ -334,6 +344,7 @@ function removeName(index) {
 
   saveStorage();
   renderAll();
+  syncNameInput();
 
   showToast(
     `${removed} dihapus.`
@@ -362,6 +373,7 @@ function clearNames() {
 
   saveStorage();
   renderAll();
+  syncNameInput();
 
   showToast(
     "Semua nama dihapus."
@@ -2053,14 +2065,9 @@ function handleAction(
 elements.addNamesButton.addEventListener(
   "click",
   () => {
-    if (
-      addNames(
-        elements.nameInput.value
-      )
-    ) {
-      elements.nameInput.value =
-        "";
-    }
+    addNames(
+      elements.nameInput.value
+    );
   }
 );
 
@@ -2261,6 +2268,8 @@ window.addEventListener(
 loadStorage();
 
 renderAll();
+
+syncNameInput();
 
 requestAnimationFrame(
   () => {
