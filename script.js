@@ -1761,7 +1761,7 @@ function resetApp() {
   saveStorage();
 
   elements.autoRemoveWinner.checked =
-    false;
+    true;
 
   elements.soundEnabled.checked =
     false;
