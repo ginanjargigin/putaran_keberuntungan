@@ -17,7 +17,7 @@ const STORAGE_KEYS = {
 };
 
 const DEFAULT_SETTINGS = {
-  autoRemoveWinner: false,
+  autoRemoveWinner: true,
   soundEnabled: false
 };
 
