@@ -1117,23 +1117,25 @@ textarea::placeholder {
     display: grid;
   }
 
-  .main-content {
-    grid-template-columns: 1fr;
-    grid-template-areas:
-      "wheel"
-      "result"
-      "names";
-    min-height: auto;
-    padding: 16px 0 10px;
-  }
+.main-content {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "wheel"
+    "names"
+    "result";
+  min-height: auto;
+  padding: 16px 0 10px;
+}
 
   .wheel-stage {
     width: min(82vw, 520px);
   }
 
-  .names-panel {
-    display: none;
-  }
+.names-panel {
+  display: block;
+  width: min(520px, 100%);
+  margin: 0 auto;
+}
 
   .result-panel {
     width: min(520px, 100%);
