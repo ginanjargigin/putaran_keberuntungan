@@ -24,9 +24,9 @@ const DEFAULT_SETTINGS = {
 const INTRO_SAMPLE_NAMES = [
   "Andi",
   "Ujang",
-  "Saskia",
+  "Selly",
   "Dedi",
-  "Fitri"
+  "Rama"
 ];
 
 /* =========================================================
@@ -161,13 +161,16 @@ function loadStorage() {
       ? history
       : [];
 
-    state.settings = {
-      ...DEFAULT_SETTINGS,
-      ...(settings &&
-      typeof settings === "object"
-        ? settings
-        : {})
-    };
+   state.settings = {
+  ...DEFAULT_SETTINGS,
+  ...(settings &&
+  typeof settings === "object"
+    ? settings
+    : {})
+};
+
+// Hapus pemenang otomatis selalu ON
+state.settings.autoRemoveWinner = true;
   } catch (error) {
     console.warn(
       "Data lokal tidak dapat dibaca:",
