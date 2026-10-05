@@ -17,6 +17,379 @@
   --radius: 20px;
   --focus: 0 0 0 3px rgba(198, 40, 40, 0.18);
 }
+/* =========================================================
+   FULL SCREEN WINNER CELEBRATION
+   ========================================================= */
+
+.winner-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
+
+  overflow: hidden;
+
+  background:
+    radial-gradient(
+      circle at center,
+      #ffffff 0%,
+      #fff7f7 45%,
+      #f3f4f6 100%
+    );
+
+  isolation: isolate;
+}
+
+
+.winner-celebration {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  width: min(88vw, 520px);
+
+  text-align: center;
+
+  animation:
+    winnerAppear
+    650ms
+    cubic-bezier(.2,.9,.25,1)
+    both;
+}
+
+
+.winner-emoji {
+  font-size: clamp(48px, 15vw, 86px);
+
+  line-height: 1;
+
+  margin-bottom: 14px;
+
+  animation:
+    winnerEmoji
+    900ms
+    ease-out
+    both;
+}
+
+
+.winner-title {
+  font-family:
+    Nunito,
+    sans-serif;
+
+  font-size:
+    clamp(34px, 10vw, 64px);
+
+  font-weight: 900;
+
+  line-height: 1;
+
+  letter-spacing: 0.02em;
+
+  color: #c62828;
+
+  text-shadow:
+    0 5px 18px
+    rgba(198, 40, 40, 0.18);
+}
+
+
+.winner-name {
+  margin-top: 18px;
+
+  max-width: 90vw;
+
+  font-family:
+    Nunito,
+    sans-serif;
+
+  font-size:
+    clamp(36px, 11vw, 72px);
+
+  font-weight: 900;
+
+  line-height: 1.05;
+
+  color: #1f2937;
+
+  overflow-wrap: anywhere;
+
+  text-shadow:
+    0 5px 20px
+    rgba(0, 0, 0, 0.12);
+}
+
+
+.winner-message {
+  margin-top: 18px;
+
+  max-width: 90%;
+
+  font-family:
+    Nunito,
+    sans-serif;
+
+  font-size:
+    clamp(16px, 4.5vw, 24px);
+
+  font-weight: 700;
+
+  line-height: 1.4;
+
+  color: #6b7280;
+}
+
+
+/* =========================================================
+   NEXT SPIN
+   ========================================================= */
+
+.winner-next-button {
+  position: relative;
+
+  margin-top: 34px;
+
+  min-width: 190px;
+  min-height: 56px;
+
+  padding:
+    12px 28px;
+
+  border: 0;
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #d32f2f,
+      #b71c1c
+    );
+
+  color: #ffffff;
+
+  font-family:
+    Nunito,
+    sans-serif;
+
+  font-size: 18px;
+  font-weight: 900;
+
+  letter-spacing: 0.02em;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 12px 30px
+    rgba(183, 28, 28, 0.28);
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.winner-next-button:active {
+  transform: scale(0.95);
+
+  box-shadow:
+    0 7px 18px
+    rgba(183, 28, 28, 0.22);
+}
+
+
+/* =========================================================
+   FALLING CONFETTI
+   ========================================================= */
+
+.winner-confetti {
+  position: absolute;
+
+  top: -30px;
+
+  z-index: 1;
+
+  display: block;
+
+  border-radius: 2px;
+
+  opacity: 0;
+
+  pointer-events: none;
+
+  animation-name:
+    winnerConfettiFall;
+
+  animation-timing-function:
+    cubic-bezier(.15,.55,.35,1);
+
+  animation-fill-mode:
+    forwards;
+}
+
+
+@keyframes winnerConfettiFall {
+
+  0% {
+    transform:
+      translate3d(0, -40px, 0)
+      rotate(0deg);
+
+    opacity: 0;
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translate3d(
+        var(--confetti-x),
+        calc(100vh + 80px),
+        0
+      )
+      rotate(var(--confetti-rotate));
+
+    opacity: 0;
+  }
+}
+
+
+@keyframes winnerAppear {
+
+  0% {
+    transform:
+      translateY(30px)
+      scale(0.82);
+
+    opacity: 0;
+  }
+
+  55% {
+    transform:
+      translateY(-5px)
+      scale(1.04);
+
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      translateY(0)
+      scale(1);
+
+    opacity: 1;
+  }
+}
+
+
+@keyframes winnerEmoji {
+
+  0% {
+    transform:
+      scale(0.4)
+      rotate(-15deg);
+
+    opacity: 0;
+  }
+
+  60% {
+    transform:
+      scale(1.15)
+      rotate(8deg);
+
+    opacity: 1;
+  }
+
+  100% {
+    transform:
+      scale(1)
+      rotate(0deg);
+
+    opacity: 1;
+  }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+  .winner-overlay {
+    padding:
+      24px 18px;
+
+    background:
+      radial-gradient(
+        circle at 50% 42%,
+        #ffffff 0%,
+        #fff8f8 50%,
+        #f1f3f5 100%
+      );
+  }
+
+
+  .winner-celebration {
+    width: 100%;
+  }
+
+
+  .winner-title {
+    font-size: clamp(
+      36px,
+      12vw,
+      56px
+    );
+  }
+
+
+  .winner-name {
+    margin-top: 14px;
+
+    font-size: clamp(
+      38px,
+      12vw,
+      64px
+    );
+  }
+
+
+  .winner-message {
+    margin-top: 16px;
+
+    font-size: 17px;
+  }
+
+
+  .winner-next-button {
+    margin-top: 30px;
+
+    width: min(
+      82vw,
+      280px
+    );
+
+    min-height: 58px;
+
+    font-size: 19px;
+
+    border-radius: 18px;
+  }
+}
 
 /* =========================================================
    CONFETTI EFFECT
