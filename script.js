@@ -1102,51 +1102,190 @@ function completeSpin(winnerIndex) {
   celebrateWinner(winner);
 }
 
-function renderWinner(winner) {
-  elements.resultContent.replaceChildren();
+/* =========================================================
+   FULL SCREEN WINNER CELEBRATION
+========================================================= */
 
-  const wrapper =
-    document.createElement("div");
+function celebrateWinner(winner) {
+  /*
+   * Hapus celebration sebelumnya jika masih ada.
+   */
+  if (activeCelebrationOverlay) {
+    activeCelebrationOverlay.remove();
+  }
 
-  const label =
-    document.createElement("span");
+  /*
+   * Sembunyikan action normal di halaman utama
+   * selama celebration berlangsung.
+   */
+  elements.resultActions.hidden = true;
 
-  label.className =
-    "result-label";
+  const overlay = document.createElement("div");
 
-  label.textContent =
-    "🎉 SELAMAT! 🎉";
+  overlay.className = "winner-overlay";
 
-  const name =
-    document.createElement("strong");
+  overlay.setAttribute("role", "dialog");
+  overlay.setAttribute("aria-modal", "true");
+  overlay.setAttribute("aria-label", `Pemenang ${winner}`);
 
-  name.className =
-    "result-winner";
+  activeCelebrationOverlay = overlay;
 
-  name.textContent =
-    winner;
+  /*
+   * Container utama.
+   */
+  const content = document.createElement("div");
 
-  const message =
-    document.createElement("span");
+  content.className = "winner-celebration";
 
-  message.className =
-    "result-label";
+  /*
+   * Emoji dekorasi.
+   */
+  const emoji = document.createElement("div");
 
+  emoji.className = "winner-emoji";
+  emoji.textContent = "🎉";
+
+  /*
+   * Judul.
+   */
+  const title = document.createElement("div");
+
+  title.className = "winner-title";
+  title.textContent = "SELAMAT!";
+
+  /*
+   * Nama pemenang.
+   */
+  const winnerName = document.createElement("div");
+
+  winnerName.className = "winner-name";
+  winnerName.textContent = winner;
+
+  /*
+   * Pesan.
+   */
+  const message = document.createElement("div");
+
+  message.className = "winner-message";
   message.textContent =
     "Nama ini terpilih sebagai pemenang!";
 
-  wrapper.append(
-    label,
-    name,
-    message
+  /*
+   * Tombol Next Spin.
+   */
+  const nextButton = document.createElement("button");
+
+  nextButton.type = "button";
+  nextButton.className = "winner-next-button";
+  nextButton.textContent = "Next Spin";
+
+  nextButton.addEventListener(
+    "click",
+    nextSpin
   );
 
-  elements.resultContent.appendChild(
-    wrapper
+  /*
+   * Susun isi celebration.
+   */
+  content.append(
+    emoji,
+    title,
+    winnerName,
+    message,
+    nextButton
   );
 
-  elements.resultActions.hidden =
-    false;
+  overlay.appendChild(content);
+
+  /*
+   * Confetti jatuh dari atas layar.
+   */
+  const fragment =
+    document.createDocumentFragment();
+
+  const pieces =
+    window.innerWidth < 600 ? 70 : 100;
+
+  for (
+    let i = 0;
+    i < pieces;
+    i += 1
+  ) {
+    const piece =
+      document.createElement("span");
+
+    piece.className =
+      "winner-confetti";
+
+    const size =
+      6 + Math.random() * 8;
+
+    const startX =
+      Math.random() * 100;
+
+    const endX =
+      startX +
+      (Math.random() - 0.5) * 30;
+
+    const rotation =
+      (Math.random() - 0.5) * 1200;
+
+    const duration =
+      2600 + Math.random() * 2200;
+
+    const delay =
+      Math.random() * 1200;
+
+    const hue =
+      Math.floor(
+        Math.random() * 360
+      );
+
+    Object.assign(
+      piece.style,
+      {
+        left: `${startX}%`,
+        width: `${size}px`,
+        height: `${size * 1.7}px`,
+        background:
+          `hsl(${hue} 85% 58%)`,
+        animationDuration:
+          `${duration}ms`,
+        animationDelay:
+          `${delay}ms`,
+        "--confetti-x":
+          `${endX - startX}vw`,
+        "--confetti-rotate":
+          `${rotation}deg`
+      }
+    );
+
+    fragment.appendChild(piece);
+  }
+
+  overlay.appendChild(fragment);
+
+  document.body.appendChild(overlay);
+
+  /*
+   * Vibrasi ringan pada perangkat yang mendukung.
+   */
+  if ("vibrate" in navigator) {
+    try {
+      navigator.vibrate([
+        80,
+        40,
+        120
+      ]);
+    } catch (_) {
+      // Abaikan jika vibrasi tidak tersedia.
+    }
+  }
+
+  /*
+   * Efek suara tetap menggunakan setting yang sudah ada.
+   */
+  playWinSound();
 }
 function nextSpin() {
   if (state.spinning) {
