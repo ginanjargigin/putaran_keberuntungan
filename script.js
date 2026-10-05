@@ -83,6 +83,7 @@ const elements = {
 const ctx = elements.canvas.getContext("2d");
 
 let toastTimer = null;
+let activeCelebrationOverlay = null;
 
 function loadStorage() {
   try {
@@ -1152,6 +1153,11 @@ function nextSpin() {
     return;
   }
 
+  if (activeCelebrationOverlay) {
+    activeCelebrationOverlay.remove();
+    activeCelebrationOverlay = null;
+  }
+
   state.winnerIndex = null;
 
   elements.resultContent.innerHTML =
@@ -1164,7 +1170,6 @@ function nextSpin() {
 
   updateControls();
 }
-
 /* =========================================================
    WINNER CELEBRATION
    ========================================================= */
