@@ -267,18 +267,57 @@ function addNames(rawText) {
     state.demoNames = false;
   }
 
-  state.names.push(...incoming);
+  // Cegah nama duplikat
+  const existingNames = new Set(
+    state.names.map(
+      name => name.trim().toLowerCase()
+    )
+  );
+
+  const uniqueNames = incoming.filter(
+    name => {
+      const normalized =
+        name.trim().toLowerCase();
+
+      if (existingNames.has(normalized)) {
+        return false;
+      }
+
+      existingNames.add(normalized);
+      return true;
+    }
+  );
+
+  const duplicateCount =
+    incoming.length -
+    uniqueNames.length;
+
+  // Hanya tambahkan nama yang belum ada
+  state.names.push(
+    ...uniqueNames
+  );
 
   saveStorage();
   renderAll();
 
-  showToast(
-    `${incoming.length} nama ditambahkan.`
-  );
+  if (duplicateCount > 0) {
+    if (uniqueNames.length > 0) {
+      showToast(
+        `${uniqueNames.length} nama ditambahkan. ${duplicateCount} nama duplikat diabaikan.`
+      );
+    } else {
+      showToast(
+        "Semua nama sudah ada di daftar."
+      );
+    }
+  } else {
+    showToast(
+      `${uniqueNames.length} nama ditambahkan.`
+    );
+  }
 
   return true;
 }
-
 function removeName(index) {
   if (
     state.spinning ||
