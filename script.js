@@ -1326,17 +1326,14 @@ function completeSpin(
       50
     );
 
- const shouldRemove = false;
+if (state.settings.autoRemoveWinner) {
+  state.names.splice(
+    winnerIndex,
+    1
+  );
 
-  if (shouldRemove) {
-    state.names.splice(
-      winnerIndex,
-      1
-    );
-
-    state.winnerIndex =
-      null;
-  }
+  state.winnerIndex = null;
+}
 
   saveStorage();
 
